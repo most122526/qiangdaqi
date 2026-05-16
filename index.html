@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0">
+    <title>智能抢答器 · 比赛控制系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg: #141a24;
+            --card: #1e2530;
+            --accent: #f59e0b;
+            --red: #ef4444;
+            --green: #10b981;
+            --blue: #3b82c4;
+            --text: #e8ecf1;
+            --text2: #9aa4b2;
+            --border: #2d3844;
+            --shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 20%, #1e2835, #0d1218);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center; padding: 10px;
+        }
+        .phone {
+            max-width: 420px; width: 100%; background: var(--bg); border-radius: 42px;
+            padding: 14px 12px 22px; box-shadow: 0 20px 50px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.04);
+            border: 2px solid #3d4a58; color: var(--text); display: flex; flex-direction: column; gap: 10px;
+        }
+        .status-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #1e2630; border-radius: 26px; padding: 7px 14px; font-size:0.78rem; font-weight:600; border:1px solid #374151;
+        }
+        .bt-area { display:flex; align-items:center; gap:6px; }
+        .led { width:10px; height:10px; border-radius:50%; background:#5a6678; transition:0.3s; }
+        .led.active { background:#10b981; box-shadow:0 0 12px #10b981; animation:pulse 1.4s infinite; }
+        @keyframes pulse { 0%,100%{opacity:0.6;transform:scale(1);} 50%{opacity:1;transform:scale(1.15);} }
+        .clock { font-family:monospace; font-weight:700; font-size:0.85rem; color:#cbd5e1; }
+        .btn {
+            background:#2d3645; border:none; padding:6px 12px; border-radius:18px; font-weight:600; font-size:0.66rem;
+            color:#e2e8f0; cursor:pointer; display:inline-flex; align-items:center; gap:4px; border:1px solid #444e5e;
+            transition:0.15s; white-space:nowrap;
+        }
+        .btn:active { transform:scale(0.94); background:#3d485a; }
+        .btn-accent { background:#d97706; border-color:#f59e0b; color:#fff; }
+        .btn-danger { background:#b91c1c; border-color:#dc2626; }
+        .btn-green { background:#0d7a4a; border-color:#10b981; }
+        .config-panel {
+            display:none; background:#1e2630; border-radius:16px; padding:10px; flex-direction:column; gap:7px; border:1px solid #374151;
+        }
+        .config-panel input {
+            background:#131821; border:1px solid #374151; color:#e2e8f0; padding:5px 10px; border-radius:12px;
+            font-family:monospace; font-size:0.62rem; flex:1; outline:none;
+        }
+        .row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+        .section-label {
+            font-weight:700; font-size:0.7rem; color:#f59e0b; letter-spacing:0.5px; display:flex; align-items:center; gap:5px;
+        }
+        .countdown-box {
+            background: linear-gradient(180deg, #1a2330 0%, #111820 100%);
+            border-radius: 20px; padding: 16px; text-align:center; border:2px solid #3d4a58;
+        }
+        .countdown-value {
+            font-size: 4rem; font-weight: 900; font-family: 'Inter', sans-serif;
+            color: #fbbf24; line-height: 1; letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(251,191,36,0.5);
+            transition: color 0.3s;
+        }
+        .countdown-value.warning { color: #ef4444; animation: blink 0.5s infinite; }
+        @keyframes blink { 50%{opacity:0.3;} }
+        .countdown-label { font-size:0.7rem; color:#8899aa; margin-top:4px; }
+        .set-countdown { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px; }
+        .set-countdown input { width:60px; text-align:center; background:#0d1218; border:1px solid #374151; color:#fbbf24; font-size:1.2rem; font-weight:700; border-radius:12px; padding:4px; }
+        .players-grid {
+            display: grid; grid-template-columns: repeat(4,1fr); gap:8px;
+        }
+        .player-card {
+            background: #1e2530; border-radius: 16px; padding: 12px 6px; text-align:center;
+            border:2px solid #2d3844; transition:0.2s; position:relative;
+        }
+        .player-card .player-num { font-size:1.6rem; font-weight:800; color:#8899aa; }
+        .player-card .player-status { font-size:0.6rem; color:#5a6a7a; margin-top:2px; }
+        .player-card.foul {
+            border-color:#ef4444; background:#2a1a1a; box-shadow:0 0 18px rgba(239,68,68,0.6);
+        }
+        .player-card.foul .player-num { color:#ef4444; }
+        .player-card.foul .player-status { color:#fca5a5; }
+        .player-card.success {
+            border-color:#10b981; background:#1a2a1a; box-shadow:0 0 18px rgba(16,185,129,0.6);
+        }
+        .player-card.success .player-num { color:#10b981; }
+        .player-card.success .player-status { color:#6ee7b7; }
+        .action-row { display:flex; gap:8px; margin-top:6px; }
+        .alert-message {
+            background:#2a1a1a; border:2px solid #ef4444; border-radius:16px; padding:10px 14px;
+            text-align:center; font-weight:700; font-size:0.8rem; color:#fca5a5; display:none;
+        }
+        .alert-message.show { display:block; }
+        .success-message {
+            background:#1a2a1a; border:2px solid #10b981; border-radius:16px; padding:10px 14px;
+            text-align:center; font-weight:700; font-size:0.9rem; color:#6ee7b7; display:none;
+        }
+        .success-message.show { display:block; }
+        .log-box {
+            background:#0c1119; border-radius:14px; padding:7px 10px; height:60px; overflow-y:auto;
+            font-family:monospace; font-size:0.56rem; color:#7a8d9a; border:1px solid #1e2a35;
+        }
+        .log-entry { border-bottom:1px solid #1a2430; padding:2px 0; }
+        .log-entry.tx { color:#fbbf24; } .log-entry.rx { color:#10b981; }
+    </style>
+</head>
+<body>
+<div class="phone">
+    <!-- 状态栏 -->
+    <div class="status-bar">
+        <div class="bt-area">
+            <div class="led" id="bleLed"></div>
+            <span id="connStatus">未连接</span>
+            <button class="btn" id="configToggleBtn"><i class="fas fa-cog"></i></button>
+        </div>
+        <div class="clock" id="liveClock">--:--:--</div>
+    </div>
+
+    <!-- 蓝牙配置 -->
+    <div class="config-panel" id="configPanel">
+        <div class="row">
+            <input id="serviceUuid" value="0000fff0-0000-1000-8000-00805f9b34fb" placeholder="服务UUID">
+            <input id="notifyUuid" value="0000fff1-0000-1000-8000-00805f9b34fb" placeholder="通知UUID">
+            <input id="writeUuid" value="0000fff1-0000-1000-8000-00805f9b34fb" placeholder="写入UUID">
+        </div>
+        <div class="row">
+            <button class="btn" id="scanBtn"><i class="fas fa-search"></i> 扫描</button>
+            <button class="btn" id="connectBtn" disabled>连接</button>
+            <button class="btn btn-danger" id="disconnectBtn" disabled>断开</button>
+            <button class="btn" id="simulateBtn"><i class="fas fa-flask"></i> 模拟</button>
+        </div>
+    </div>
+
+    <!-- 倒计时区域 -->
+    <div class="countdown-box">
+        <div class="countdown-value" id="realCountdownDisplay">0</div>
+        <div class="countdown-label">实时倒计时 (秒)</div>
+        <div class="set-countdown">
+            <span style="font-size:0.7rem; color:#8899aa;">设定:</span>
+            <span id="setCountdownDisplay" style="font-size:1.2rem; font-weight:700; color:#d4a574;">10</span>
+            <span style="font-size:0.7rem; color:#8899aa;">秒</span>
+        </div>
+        <div class="row" style="justify-content:center; margin-top:8px;">
+            <button class="btn" id="setIncBtn">B 设置+</button>
+            <button class="btn" id="setDecBtn">C 设置-</button>
+            <button class="btn btn-accent" id="startBtn">A 开始</button>
+        </div>
+    </div>
+
+    <!-- 选手显示 -->
+    <div class="section-label"><i class="fas fa-users"></i> 选手状态</div>
+    <div class="players-grid" id="playersGrid">
+        <!-- 动态生成8个选手卡片 -->
+    </div>
+
+    <!-- 违规/成功提示 -->
+    <div class="alert-message" id="foulAlert"></div>
+    <div class="success-message" id="successAlert"></div>
+
+    <!-- 语音 & 蜂鸣器 -->
+    <div class="action-row">
+        <button class="btn btn-green" id="voiceBtn" style="flex:1;"><i class="fas fa-volume-up"></i> D 语音播报</button>
+        <button class="btn btn-danger" id="buzzerBtn" style="flex:1;"><i class="fas fa-bell"></i> E 蜂鸣器</button>
+    </div>
+
+    <!-- 日志 -->
+    <div class="log-box" id="sysLog">🎤 抢答器系统就绪</div>
+</div>
+
+<script>
+(function() {
+    // DOM
+    const bleLed = document.getElementById('bleLed');
+    const connStatus = document.getElementById('connStatus');
+    const configToggleBtn = document.getElementById('configToggleBtn');
+    const configPanel = document.getElementById('configPanel');
+    const scanBtn = document.getElementById('scanBtn');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const simulateBtn = document.getElementById('simulateBtn');
+    const serviceUuidInput = document.getElementById('serviceUuid');
+    const notifyUuidInput = document.getElementById('notifyUuid');
+    const writeUuidInput = document.getElementById('writeUuid');
+    const sysLog = document.getElementById('sysLog');
+    const clockSpan = document.getElementById('liveClock');
+    const realCountdownDisplay = document.getElementById('realCountdownDisplay');
+    const setCountdownDisplay = document.getElementById('setCountdownDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const setIncBtn = document.getElementById('setIncBtn');
+    const setDecBtn = document.getElementById('setDecBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const buzzerBtn = document.getElementById('buzzerBtn');
+    const playersGrid = document.getElementById('playersGrid');
+    const foulAlert = document.getElementById('foulAlert');
+    const successAlert = document.getElementById('successAlert');
+
+    let bluetoothDevice = null, gattServer = null, notifyChar = null, writeChar = null, isConnected = false;
+    // 数据
+    let keyValue = 0;
+    let realCountdown = 0;
+    let setCountdown = 10;
+    let prevRealCountdown = 0;
+    let prevKeyValue = 0;
+    let foulPlayer = null;
+    let successPlayer = null;
+    let displayTimer = null;
+
+    // 构建选手卡片
+    function buildPlayers() {
+        playersGrid.innerHTML = '';
+        for (let i = 1; i <= 8; i++) {
+            const card = document.createElement('div');
+            card.className = 'player-card';
+            card.id = 'playerCard' + i;
+            card.innerHTML = `<div class="player-num">${i}</div><div class="player-status">待命</div>`;
+            playersGrid.appendChild(card);
+        }
+    }
+
+    function addSysLog(msg, type='system') {
+        const div = document.createElement('div');
+        div.className = 'log-entry ' + type;
+        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        sysLog.appendChild(div); sysLog.scrollTop = sysLog.scrollHeight;
+        if(sysLog.children.length > 30) sysLog.removeChild(sysLog.children[0]);
+    }
+
+    function updateClock() { clockSpan.textContent = new Date().toLocaleTimeString('zh-CN',{hour12:false}); }
+    setInterval(updateClock,1000); updateClock();
+
+    function updateConnectionUI(connected) {
+        isConnected = connected;
+        bleLed.classList.toggle('active', connected);
+        connStatus.textContent = connected ? '已连接' : '未连接';
+        connectBtn.disabled = connected || !bluetoothDevice;
+        disconnectBtn.disabled = !connected;
+        scanBtn.disabled = connected;
+    }
+
+    async function sendCommand(cmd, desc) {
+        if (!isConnected || !writeChar) { addSysLog('⚠️ 未连接', 'tx'); return; }
+        try {
+            await writeChar.writeValue(new TextEncoder().encode(cmd));
+            addSysLog(`📤 ${cmd} (${desc})`, 'tx');
+        } catch(e) { addSysLog(`发送失败: ${e.message}`, 'tx'); }
+    }
+
+    // 语音播报 (浏览器端)
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'zh-CN';
+            utter.rate = 1.1;
+            window.speechSynthesis.speak(utter);
+        }
+    }
+
+    // 蜂鸣器模拟
+    function playBeep() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 800;
+            gain.gain.value = 0.5;
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        } catch(e) {}
+    }
+
+    // 清除选手状态
+    function clearAllPlayers() {
+        for (let i = 1; i <= 8; i++) {
+            const card = document.getElementById('playerCard' + i);
+            if (card) {
+                card.classList.remove('foul', 'success');
+                card.querySelector('.player-status').textContent = '待命';
+            }
+        }
+        foulPlayer = null;
+        successPlayer = null;
+        foulAlert.classList.remove('show');
+        successAlert.classList.remove('show');
+    }
+
+    // 更新界面
+    function updateUI() {
+        realCountdownDisplay.textContent = realCountdown;
+        if (realCountdown > 0 && realCountdown <= 3) {
+            realCountdownDisplay.classList.add('warning');
+        } else {
+            realCountdownDisplay.classList.remove('warning');
+        }
+        setCountdownDisplay.textContent = setCountdown;
+
+        // 判定逻辑
+        const keyChanged = (keyValue !== prevKeyValue) && (keyValue >= 1 && keyValue <= 8);
+        const countdownEnded = (realCountdown === 0 && prevRealCountdown > 0);
+
+        if (keyChanged) {
+            if (realCountdown > 0) {
+                // 违规抢答
+                foulPlayer = keyValue;
+                successPlayer = null;
+                const card = document.getElementById('playerCard' + foulPlayer);
+                if (card) {
+                    clearAllPlayers();
+                    card.classList.add('foul');
+                    card.querySelector('.player-status').textContent = '违规！';
+                }
+                foulAlert.textContent = `⚠️ 选手 ${foulPlayer} 违规抢答！罚时10分钟不能作答！`;
+                foulAlert.classList.add('show');
+                successAlert.classList.remove('show');
+                speak(`选手 ${foulPlayer} 违规抢答！罚时10分钟不能作答！`);
+                playBeep();
+            } else if (countdownEnded || realCountdown === 0) {
+                // 成功抢答
+                successPlayer = keyValue;
+                foulPlayer = null;
+                const card = document.getElementById('playerCard' + successPlayer);
+                if (card) {
+                    clearAllPlayers();
+                    card.classList.add('success');
+                    card.querySelector('.player-status').textContent = '成功！';
+                }
+                successAlert.textContent = `🎉 选手 ${successPlayer} 抢答成功！`;
+                successAlert.classList.add('show');
+                foulAlert.classList.remove('show');
+                speak(`选手 ${successPlayer} 抢答成功！`);
+            }
+        } else if (realCountdown === 0 && prevRealCountdown > 0 && keyValue < 1 || keyValue > 8) {
+            // 倒计时结束无人抢答
+            successAlert.textContent = '⏰ 倒计时结束，无人抢答';
+            successAlert.classList.add('show');
+            foulAlert.classList.remove('show');
+            clearAllPlayers();
+        }
+
+        // 如果键值变为非1~8，清除显示
+        if (keyValue < 1 || keyValue > 8) {
+            if (foulPlayer || successPlayer) {
+                // 保持一段时间后清除
+                if (displayTimer) clearTimeout(displayTimer);
+                displayTimer = setTimeout(() => {
+                    clearAllPlayers();
+                }, 3000);
+            }
+        }
+
+        prevKeyValue = keyValue;
+        prevRealCountdown = realCountdown;
+    }
+
+    // 解析上传数据 #键值#实时倒计时#设置倒计时#
+    function parseSensorData(raw) {
+        const match = raw.match(/#(\d+)#([\d.]+)#([\d.]+)#/);
+        if (!match) return;
+        prevKeyValue = keyValue;
+        prevRealCountdown = realCountdown;
+        keyValue = parseInt(match[1]);
+        realCountdown = parseFloat(match[2]);
+        setCountdown = parseFloat(match[3]);
+        addSysLog(`📥 键值:${keyValue} 实时:${realCountdown} 设置:${setCountdown}`, 'rx');
+        updateUI();
+    }
+
+    function onNotification(event) {
+        const val = event.target.value;
+        if (!val) return;
+        parseSensorData(new TextDecoder('utf-8').decode(val).trim());
+    }
+
+    // 蓝牙连接
+    async function scan() {
+        if (!navigator.bluetooth) { alert('需要Web Bluetooth'); return; }
+        const svc = serviceUuidInput.value.trim(); if(!svc) return alert('输入UUID');
+        try {
+            const d = await navigator.bluetooth.requestDevice({ filters: [{ services: [svc] }], optionalServices: [svc] });
+            bluetoothDevice = d; connectBtn.disabled = false;
+            addSysLog(`已选择设备: ${d.name||d.id}`, 'system');
+        } catch(e) { if(!e.message.includes('cancelled')) addSysLog(`扫描错误: ${e.message}`); }
+    }
+    async function connect() {
+        if (!bluetoothDevice) return;
+        const svc = serviceUuidInput.value.trim(), ntf = notifyUuidInput.value.trim(), wrt = writeUuidInput.value.trim();
+        try {
+            gattServer = await bluetoothDevice.gatt.connect();
+            const service = await gattServer.getPrimaryService(svc);
+            notifyChar = await service.getCharacteristic(ntf);
+            await notifyChar.startNotifications();
+            notifyChar.addEventListener('characteristicvaluechanged', onNotification);
+            if (wrt) { try { writeChar = await service.getCharacteristic(wrt); } catch(e) {} }
+            updateConnectionUI(true);
+            bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnect);
+            addSysLog('✅ 蓝牙已连接', 'system');
+        } catch(e) { addSysLog(`连接失败: ${e.message}`); updateConnectionUI(false); }
+    }
+    function onDisconnect() {
+        addSysLog('🔌 断开');
+        if (notifyChar) notifyChar.removeEventListener('characteristicvaluechanged', onNotification);
+        notifyChar = writeChar = null; updateConnectionUI(false);
+    }
+    function disconnect() { if (bluetoothDevice?.gatt.connected) bluetoothDevice.gatt.disconnect(); else onDisconnect(); }
+
+    // 按钮事件
+    configToggleBtn.addEventListener('click', ()=> configPanel.style.display = configPanel.style.display==='none'?'flex':'none');
+    scanBtn.addEventListener('click', scan);
+    connectBtn.addEventListener('click', connect);
+    disconnectBtn.addEventListener('click', disconnect);
+    startBtn.addEventListener('click', ()=> sendCommand('A', '开始'));
+    setIncBtn.addEventListener('click', ()=> sendCommand('B', '设置+'));
+    setDecBtn.addEventListener('click', ()=> sendCommand('C', '设置-'));
+    voiceBtn.addEventListener('click', ()=> { sendCommand('D', '语音播报'); speak('语音播报测试'); });
+    buzzerBtn.addEventListener('click', ()=> { sendCommand('E', '蜂鸣器'); playBeep(); });
+
+    // 模拟数据
+    simulateBtn.addEventListener('click', ()=>{
+        const key = Math.random() < 0.7 ? 0 : Math.floor(Math.random()*8)+1;
+        const real = Math.max(0, (realCountdown - 1));
+        const raw = `#${key}#${real}#${setCountdown}#`;
+        parseSensorData(raw);
+        addSysLog('🧪 模拟数据已注入', 'system');
+    });
+
+    // 初始化
+    function init() {
+        buildPlayers();
+        updateConnectionUI(false);
+        updateUI();
+        addSysLog('🎤 抢答器系统已启动');
+    }
+    init();
+})();
+</script>
+</body>
+</html>
