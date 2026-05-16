@@ -62,7 +62,6 @@
         .section-label {
             font-weight:700; font-size:0.7rem; color:#f59e0b; letter-spacing:0.5px; display:flex; align-items:center; gap:5px;
         }
-        /* 倒计时区 */
         .countdown-box {
             background: linear-gradient(180deg, #1a2432 0%, #101820 100%);
             border-radius: 22px; padding: 14px; text-align:center; border:2px solid #323e4e;
@@ -82,7 +81,14 @@
         .countdown-label { font-size:0.7rem; color:#8899aa; margin-top:4px; }
         .set-countdown { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px; }
         .set-countdown .set-val { font-size:1.3rem; font-weight:700; color:#d4a574; }
-        /* 选手网格 */
+        .penalty-row {
+            display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px;
+            font-size:0.65rem; color:#8899aa;
+        }
+        .penalty-row input {
+            width:50px; background:#0d1520; border:1px solid #2a3644; color:#fbbf24; text-align:center;
+            border-radius:10px; padding:4px; font-size:0.8rem; font-weight:700;
+        }
         .players-grid {
             display: grid; grid-template-columns: repeat(4,1fr); gap:8px;
         }
@@ -106,7 +112,6 @@
         @keyframes successPulse { 0%,100%{box-shadow:0 0 16px rgba(16,185,129,0.5);} 50%{box-shadow:0 0 34px rgba(16,185,129,1);} }
         .player-card.success .player-num { color:#10b981; font-size:2rem; }
         .player-card.success .player-status { color:#6ee7b7; font-weight:700; }
-        /* 横幅 */
         .banner {
             border-radius:16px; padding:10px 14px; text-align:center; font-weight:700; font-size:0.8rem;
             display:none; animation: fadeIn 0.3s;
@@ -166,6 +171,12 @@
             <span class="set-val" id="setCountdownDisplay">10</span>
             <span style="font-size:0.65rem; color:#8899aa;">秒</span>
         </div>
+        <!-- 新增罚时设置行 -->
+        <div class="penalty-row">
+            <span>⏳ 违规罚时:</span>
+            <input type="number" id="penaltyInput" value="10" min="1" max="120" step="1">
+            <span>分钟</span>
+        </div>
         <div class="row" style="justify-content:center; margin-top:6px;">
             <button class="btn" id="setIncBtn">B +</button>
             <button class="btn" id="setDecBtn">C -</button>
@@ -223,64 +234,20 @@
     const infoBanner = document.getElementById('infoBanner');
     const successBanner = document.getElementById('successBanner');
     const foulBanner = document.getElementById('foulBanner');
+    const penaltyInput = document.getElementById('penaltyInput'); // 新增
 
     // ==================== 蓝牙变量 ====================
     let bluetoothDevice = null, gattServer = null, notifyChar = null, writeChar = null, isConnected = false;
 
-    // ==================== 核心数据（完全来自上传） ====================
-    let keyValue = 0;               // 当前键值
-    let realCountdown = 0;          // 实时倒计时
-    let setCountdown = 10;          // 设置倒计时
-    let prevKeyValue = 0;           // 上一轮键值
-    let prevRealCountdown = 0;      // 上一轮实时倒计时
-
-    // ==================== 状态机 ====================
-    // 'idle'      : 初始/待机，实时倒计时=0，尚未开始
-    // 'counting'  : 倒计时运行中，实时倒计时>0
-    // 'answering' : 倒计时刚结束，实时倒计时变为0，等待抢答
+    // ==================== 核心数据 ====================
+    let keyValue = 0;
+    let realCountdown = 0;
+    let setCountdown = 10;
+    let prevKeyValue = 0;
+    let prevRealCountdown = 0;
     let gameState = 'idle';
-    let foulSet = new Set();        // 本轮违规选手编号集合
-    let successPlayer = null;       // 成功抢答选手编号
-
-    // ==================== UI构建 ====================
-    function buildPlayers() {
-        playersGrid.innerHTML = '';
-        for (let i = 1; i <= 8; i++) {
-            const card = document.createElement('div');
-            card.className = 'player-card';
-            card.id = 'playerCard' + i;
-            card.innerHTML = `<div class="player-num">${i}</div><div class="player-status">待命</div>`;
-            playersGrid.appendChild(card);
-        }
-    }
-
-    function clearAllPlayerStyles() {
-        for (let i = 1; i <= 8; i++) {
-            const card = document.getElementById('playerCard' + i);
-            if (card) {
-                card.classList.remove('foul', 'success');
-                card.querySelector('.player-status').textContent = '待命';
-            }
-        }
-    }
-
-    function markPlayerFoul(num) {
-        const card = document.getElementById('playerCard' + num);
-        if (card) {
-            card.classList.remove('success');
-            card.classList.add('foul');
-            card.querySelector('.player-status').textContent = '违规!';
-        }
-    }
-
-    function markPlayerSuccess(num) {
-        const card = document.getElementById('playerCard' + num);
-        if (card) {
-            card.classList.remove('foul');
-            card.classList.add('success');
-            card.querySelector('.player-status').textContent = '★成功!';
-        }
-    }
+    let foulSet = new Set();
+    let successPlayer = null;
 
     // ==================== 辅助函数 ====================
     function addSysLog(msg, type='system') {
@@ -328,11 +295,50 @@
         } catch(e){}
     }
 
+    // ==================== UI构建 ====================
+    function buildPlayers() {
+        playersGrid.innerHTML = '';
+        for (let i = 1; i <= 8; i++) {
+            const card = document.createElement('div');
+            card.className = 'player-card';
+            card.id = 'playerCard' + i;
+            card.innerHTML = `<div class="player-num">${i}</div><div class="player-status">待命</div>`;
+            playersGrid.appendChild(card);
+        }
+    }
+
+    function clearAllPlayerStyles() {
+        for (let i = 1; i <= 8; i++) {
+            const card = document.getElementById('playerCard' + i);
+            if (card) {
+                card.classList.remove('foul', 'success');
+                card.querySelector('.player-status').textContent = '待命';
+            }
+        }
+    }
+
+    function markPlayerFoul(num) {
+        const card = document.getElementById('playerCard' + num);
+        if (card) {
+            card.classList.remove('success');
+            card.classList.add('foul');
+            card.querySelector('.player-status').textContent = '违规!';
+        }
+    }
+
+    function markPlayerSuccess(num) {
+        const card = document.getElementById('playerCard' + num);
+        if (card) {
+            card.classList.remove('foul');
+            card.classList.add('success');
+            card.querySelector('.player-status').textContent = '★成功!';
+        }
+    }
+
     // ==================== 更新界面显示 ====================
     function updateDisplay() {
         // 倒计时数字
         realCountdownDisplay.textContent = realCountdown;
-        // 倒计时样式
         realCountdownDisplay.classList.remove('warning', 'zero');
         if (gameState === 'counting' && realCountdown <= 3 && realCountdown > 0) {
             realCountdownDisplay.classList.add('warning');
@@ -341,14 +347,12 @@
             realCountdownDisplay.classList.add('zero');
             realCountdownDisplay.textContent = '抢!';
         }
-        // 倒计时标签
         if (gameState === 'counting') countdownLabel.textContent = '⏳ 倒计时中…';
         else if (gameState === 'answering') countdownLabel.textContent = '🔔 开始抢答！';
         else countdownLabel.textContent = '实时倒计时 (秒)';
-        // 倒计时框
         countdownBox.classList.toggle('answering', gameState === 'answering');
-        // 设置值
         setCountdownDisplay.textContent = setCountdown;
+
         // 信息横幅
         if (gameState === 'idle') {
             infoBanner.textContent = '⏳ 等待开始… 键值非1-8时显示"未有选手抢答"';
@@ -362,6 +366,7 @@
         } else if (successPlayer) {
             infoBanner.classList.remove('show');
         }
+
         // 成功横幅
         if (successPlayer) {
             successBanner.textContent = `🎉 选手 ${successPlayer} 抢答成功！`;
@@ -370,10 +375,12 @@
         } else {
             successBanner.classList.remove('show');
         }
-        // 违规横幅
+
+        // 违规横幅（使用罚时输入框的值）
         if (foulSet.size > 0) {
             const arr = [...foulSet].sort((a,b)=>a-b);
-            foulBanner.textContent = `⚠️ 违规抢答: 选手 ${arr.join('、')} — 罚时10分钟！`;
+            const penaltyMin = penaltyInput.value || 10; // 读取罚时设置
+            foulBanner.textContent = `⚠️ 违规抢答: 选手 ${arr.join('、')} — 罚时${penaltyMin}分钟！`;
             foulBanner.classList.add('show');
         } else {
             foulBanner.classList.remove('show');
@@ -383,9 +390,7 @@
     // ==================== 核心逻辑 ====================
     function processIncomingData() {
         const prevState = gameState;
-        // 判断状态转换
         if (prevRealCountdown === 0 && realCountdown > 0) {
-            // 倒计时开始：进入counting状态，清除上一轮所有结果
             gameState = 'counting';
             foulSet.clear();
             successPlayer = null;
@@ -394,38 +399,33 @@
             successBanner.classList.remove('show');
             addSysLog('▶ 倒计时开始，进入抢答倒计时阶段', 'system');
         } else if (prevRealCountdown > 0 && realCountdown === 0) {
-            // 倒计时结束：进入answering状态
             gameState = 'answering';
             addSysLog('⏰ 倒计时结束！开始抢答！', 'system');
             speak('开始抢答');
         }
 
-        // 违规检测：在counting状态中，键值变为1-8
         if (gameState === 'counting' && keyValue >= 1 && keyValue <= 8 && keyValue !== prevKeyValue) {
             if (!foulSet.has(keyValue)) {
                 foulSet.add(keyValue);
                 markPlayerFoul(keyValue);
-                addSysLog(`🚫 选手 ${keyValue} 违规抢答！(倒计时未结束)`, 'system');
-                speak(`选手 ${keyValue} 违规抢答！罚时10分钟！`);
+                const penaltyMin = penaltyInput.value || 10;
+                addSysLog(`🚫 选手 ${keyValue} 违规抢答！罚时${penaltyMin}分钟`, 'system');
+                speak(`选手 ${keyValue} 违规抢答！罚时${penaltyMin}分钟！`);
                 playBeep();
             }
         }
 
-        // 成功检测：在answering状态中，键值从非1-8变为1-8（第一个）
         if (gameState === 'answering' && !successPlayer && keyValue >= 1 && keyValue <= 8 && keyValue !== prevKeyValue) {
-            // 检查该选手是否在违规列表中（如果在，仍然算成功，但保留违规记录）
             successPlayer = keyValue;
             markPlayerSuccess(keyValue);
             addSysLog(`🏆 选手 ${keyValue} 成功抢答！`, 'system');
             speak(`选手 ${keyValue} 抢答成功！`);
-            // 成功后再显示违规汇总
             if (foulSet.size > 0) {
                 const arr = [...foulSet].sort((a,b)=>a-b);
                 addSysLog(`⚠️ 违规选手汇总: ${arr.join('、')}`, 'system');
             }
         }
 
-        // 保存状态
         prevKeyValue = keyValue;
         prevRealCountdown = realCountdown;
         updateDisplay();
@@ -439,7 +439,6 @@
         const newReal = parseFloat(match[2]);
         const newSet = parseFloat(match[3]);
         if (isNaN(newKey) || isNaN(newReal) || isNaN(newSet)) return;
-        // 更新全局变量
         prevKeyValue = keyValue;
         prevRealCountdown = realCountdown;
         keyValue = newKey;
@@ -455,7 +454,6 @@
         parseSensorData(new TextDecoder('utf-8').decode(val).trim());
     }
 
-    // ==================== 清除 ====================
     function resetAll() {
         gameState = 'idle';
         foulSet.clear();
@@ -516,7 +514,7 @@
     buzzerBtn.addEventListener('click', ()=>{ sendCommand('E', '蜂鸣器'); playBeep(); });
     resetBtn.addEventListener('click', resetAll);
 
-    // ==================== 模拟数据 ====================
+    // 模拟数据
     let simStep = 0;
     let simTimer = null;
     simulateBtn.addEventListener('click', ()=>{
@@ -525,31 +523,17 @@
         setCountdown = 8;
         keyValue = 0; realCountdown = 0; prevKeyValue = 0; prevRealCountdown = 0;
         resetAll();
-        addSysLog('🧪 开始模拟流程 (设置8秒)', 'system');
-        // 初始状态
+        addSysLog('🧪 开始模拟流程 (设置8秒，罚时'+penaltyInput.value+'分钟)', 'system');
         parseSensorData(`#0#0#8#`);
         simTimer = setInterval(()=>{
             simStep++;
-            if (simStep === 1) {
-                // 开始倒计时
-                parseSensorData(`#0#8#8#`);
-            } else if (simStep === 3) {
-                // 选手3违规
-                parseSensorData(`#3#6#8#`);
-            } else if (simStep === 4) {
-                // 选手3松开
-                parseSensorData(`#0#5#8#`);
-            } else if (simStep === 6) {
-                // 选手5也违规
-                parseSensorData(`#5#3#8#`);
-            } else if (simStep === 7) {
-                // 选手5松开
-                parseSensorData(`#0#2#8#`);
-            } else if (simStep === 9) {
-                // 倒计时结束
-                parseSensorData(`#0#0#8#`);
-            } else if (simStep === 11) {
-                // 选手2成功抢答
+            if (simStep === 1) { parseSensorData(`#0#8#8#`); }
+            else if (simStep === 3) { parseSensorData(`#3#6#8#`); }
+            else if (simStep === 4) { parseSensorData(`#0#5#8#`); }
+            else if (simStep === 6) { parseSensorData(`#5#3#8#`); }
+            else if (simStep === 7) { parseSensorData(`#0#2#8#`); }
+            else if (simStep === 9) { parseSensorData(`#0#0#8#`); }
+            else if (simStep === 11) {
                 parseSensorData(`#2#0#8#`);
                 clearInterval(simTimer); simTimer = null;
                 addSysLog('✅ 模拟完成', 'system');
@@ -565,7 +549,7 @@
         setCountdownDisplay.textContent = setCountdown;
         updateDisplay();
         addSysLog('🎤 抢答器系统就绪');
-        addSysLog('💡 倒计时中按键=违规 | 倒计时结束后第一个按键=成功');
+        addSysLog('💡 可设置违规罚时时间，默认10分钟');
     }
     init();
 })();
