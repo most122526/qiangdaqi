@@ -8,108 +8,125 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --bg: #141a24;
-            --card: #1e2530;
+            --bg: #0d1520;
+            --card: #182230;
             --accent: #f59e0b;
             --red: #ef4444;
             --green: #10b981;
             --blue: #3b82c4;
             --text: #e8ecf1;
             --text2: #9aa4b2;
-            --border: #2d3844;
+            --border: #2a3644;
             --shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
         }
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
         body {
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at 50% 20%, #1e2835, #0d1218);
+            background: radial-gradient(circle at 50% 15%, #162030, #080e16);
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center; padding: 10px;
         }
         .phone {
-            max-width: 420px; width: 100%; background: var(--bg); border-radius: 42px;
-            padding: 14px 12px 22px; box-shadow: 0 20px 50px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.04);
-            border: 2px solid #3d4a58; color: var(--text); display: flex; flex-direction: column; gap: 10px;
+            max-width: 430px; width: 100%; background: var(--bg); border-radius: 42px;
+            padding: 14px 12px 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.04);
+            border: 2px solid #323e4e; color: var(--text); display: flex; flex-direction: column; gap: 10px;
         }
         .status-bar {
             display: flex; justify-content: space-between; align-items: center;
-            background: #1e2630; border-radius: 26px; padding: 7px 14px; font-size:0.78rem; font-weight:600; border:1px solid #374151;
+            background: #182230; border-radius: 26px; padding: 7px 14px; font-size:0.78rem; font-weight:600; border:1px solid #2a3644;
         }
         .bt-area { display:flex; align-items:center; gap:6px; }
-        .led { width:10px; height:10px; border-radius:50%; background:#5a6678; transition:0.3s; }
+        .led { width:10px; height:10px; border-radius:50%; background:#4a5a6e; transition:0.3s; }
         .led.active { background:#10b981; box-shadow:0 0 12px #10b981; animation:pulse 1.4s infinite; }
         @keyframes pulse { 0%,100%{opacity:0.6;transform:scale(1);} 50%{opacity:1;transform:scale(1.15);} }
         .clock { font-family:monospace; font-weight:700; font-size:0.85rem; color:#cbd5e1; }
         .btn {
-            background:#2d3645; border:none; padding:6px 12px; border-radius:18px; font-weight:600; font-size:0.66rem;
-            color:#e2e8f0; cursor:pointer; display:inline-flex; align-items:center; gap:4px; border:1px solid #444e5e;
+            background:#253040; border:none; padding:6px 12px; border-radius:18px; font-weight:600; font-size:0.66rem;
+            color:#e2e8f0; cursor:pointer; display:inline-flex; align-items:center; gap:4px; border:1px solid #3a4a5e;
             transition:0.15s; white-space:nowrap;
         }
-        .btn:active { transform:scale(0.94); background:#3d485a; }
-        .btn-accent { background:#d97706; border-color:#f59e0b; color:#fff; }
+        .btn:active { transform:scale(0.94); background:#3a4a5e; }
+        .btn-accent { background:#d97706; border-color:#f59e0b; color:#fff; font-weight:700; }
         .btn-danger { background:#b91c1c; border-color:#dc2626; }
         .btn-green { background:#0d7a4a; border-color:#10b981; }
+        .btn-blue { background:#1e4d80; border-color:#3b82c4; }
+        .btn-reset { background:#4a3050; border-color:#7c5295; }
         .config-panel {
-            display:none; background:#1e2630; border-radius:16px; padding:10px; flex-direction:column; gap:7px; border:1px solid #374151;
+            display:none; background:#182230; border-radius:16px; padding:10px; flex-direction:column; gap:7px; border:1px solid #2a3644;
         }
         .config-panel input {
-            background:#131821; border:1px solid #374151; color:#e2e8f0; padding:5px 10px; border-radius:12px;
+            background:#0d1520; border:1px solid #2a3644; color:#e2e8f0; padding:5px 10px; border-radius:12px;
             font-family:monospace; font-size:0.62rem; flex:1; outline:none;
         }
         .row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
         .section-label {
             font-weight:700; font-size:0.7rem; color:#f59e0b; letter-spacing:0.5px; display:flex; align-items:center; gap:5px;
         }
+        /* 倒计时区 */
         .countdown-box {
-            background: linear-gradient(180deg, #1a2330 0%, #111820 100%);
-            border-radius: 20px; padding: 16px; text-align:center; border:2px solid #3d4a58;
+            background: linear-gradient(180deg, #1a2432 0%, #101820 100%);
+            border-radius: 22px; padding: 14px; text-align:center; border:2px solid #323e4e;
+            position:relative; overflow:hidden;
+        }
+        .countdown-box.answering {
+            border-color:#10b981; box-shadow:0 0 28px rgba(16,185,129,0.4);
         }
         .countdown-value {
-            font-size: 4rem; font-weight: 900; font-family: 'Inter', sans-serif;
+            font-size: 4.5rem; font-weight: 900; font-family: 'Inter', sans-serif;
             color: #fbbf24; line-height: 1; letter-spacing: 4px;
-            text-shadow: 0 0 20px rgba(251,191,36,0.5);
-            transition: color 0.3s;
+            text-shadow: 0 0 20px rgba(251,191,36,0.5); transition: color 0.3s;
         }
-        .countdown-value.warning { color: #ef4444; animation: blink 0.5s infinite; }
-        @keyframes blink { 50%{opacity:0.3;} }
+        .countdown-value.warning { color: #ef4444; animation: blinkFast 0.4s infinite; }
+        .countdown-value.zero { color: #10b981; font-size: 2.8rem; text-shadow: 0 0 24px rgba(16,185,129,0.7); }
+        @keyframes blinkFast { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
         .countdown-label { font-size:0.7rem; color:#8899aa; margin-top:4px; }
-        .set-countdown { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px; }
-        .set-countdown input { width:60px; text-align:center; background:#0d1218; border:1px solid #374151; color:#fbbf24; font-size:1.2rem; font-weight:700; border-radius:12px; padding:4px; }
+        .set-countdown { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px; }
+        .set-countdown .set-val { font-size:1.3rem; font-weight:700; color:#d4a574; }
+        /* 选手网格 */
         .players-grid {
             display: grid; grid-template-columns: repeat(4,1fr); gap:8px;
         }
         .player-card {
-            background: #1e2530; border-radius: 16px; padding: 12px 6px; text-align:center;
-            border:2px solid #2d3844; transition:0.2s; position:relative;
+            background: #1a2430; border-radius: 16px; padding: 10px 4px; text-align:center;
+            border:2px solid #2a3644; transition:0.25s; position:relative;
         }
-        .player-card .player-num { font-size:1.6rem; font-weight:800; color:#8899aa; }
-        .player-card .player-status { font-size:0.6rem; color:#5a6a7a; margin-top:2px; }
+        .player-card .player-num { font-size:1.7rem; font-weight:800; color:#6b7d8e; transition:0.2s; }
+        .player-card .player-status { font-size:0.55rem; color:#4a5a6e; margin-top:2px; font-weight:600; }
         .player-card.foul {
-            border-color:#ef4444; background:#2a1a1a; box-shadow:0 0 18px rgba(239,68,68,0.6);
+            border-color:#ef4444; background:#2a1418; box-shadow:0 0 16px rgba(239,68,68,0.55);
+            animation: foulShake 0.5s infinite;
         }
+        @keyframes foulShake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-2px);} 75%{transform:translateX(2px);} }
         .player-card.foul .player-num { color:#ef4444; }
         .player-card.foul .player-status { color:#fca5a5; }
         .player-card.success {
-            border-color:#10b981; background:#1a2a1a; box-shadow:0 0 18px rgba(16,185,129,0.6);
+            border-color:#10b981; background:#14281e; box-shadow:0 0 26px rgba(16,185,129,0.7);
+            animation: successPulse 0.6s infinite; transform:scale(1.05); z-index:2;
         }
-        .player-card.success .player-num { color:#10b981; }
-        .player-card.success .player-status { color:#6ee7b7; }
-        .action-row { display:flex; gap:8px; margin-top:6px; }
-        .alert-message {
-            background:#2a1a1a; border:2px solid #ef4444; border-radius:16px; padding:10px 14px;
-            text-align:center; font-weight:700; font-size:0.8rem; color:#fca5a5; display:none;
+        @keyframes successPulse { 0%,100%{box-shadow:0 0 16px rgba(16,185,129,0.5);} 50%{box-shadow:0 0 34px rgba(16,185,129,1);} }
+        .player-card.success .player-num { color:#10b981; font-size:2rem; }
+        .player-card.success .player-status { color:#6ee7b7; font-weight:700; }
+        /* 横幅 */
+        .banner {
+            border-radius:16px; padding:10px 14px; text-align:center; font-weight:700; font-size:0.8rem;
+            display:none; animation: fadeIn 0.3s;
         }
-        .alert-message.show { display:block; }
-        .success-message {
-            background:#1a2a1a; border:2px solid #10b981; border-radius:16px; padding:10px 14px;
-            text-align:center; font-weight:700; font-size:0.9rem; color:#6ee7b7; display:none;
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
+        .banner.success-banner {
+            background:#14281e; border:2px solid #10b981; color:#6ee7b7; font-size:0.9rem;
         }
-        .success-message.show { display:block; }
+        .banner.foul-banner {
+            background:#2a1418; border:2px solid #ef4444; color:#fca5a5;
+        }
+        .banner.info-banner {
+            background:#141e2a; border:2px solid #3b82c4; color:#93c5fd;
+        }
+        .banner.show { display:block; }
         .log-box {
-            background:#0c1119; border-radius:14px; padding:7px 10px; height:60px; overflow-y:auto;
-            font-family:monospace; font-size:0.56rem; color:#7a8d9a; border:1px solid #1e2a35;
+            background:#080e16; border-radius:14px; padding:7px 10px; height:55px; overflow-y:auto;
+            font-family:monospace; font-size:0.55rem; color:#6b7d8e; border:1px solid #1a2430;
         }
-        .log-entry { border-bottom:1px solid #1a2430; padding:2px 0; }
+        .log-entry { border-bottom:1px solid #141e2a; padding:2px 0; }
         .log-entry.tx { color:#fbbf24; } .log-entry.rx { color:#10b981; }
     </style>
 </head>
@@ -136,49 +153,49 @@
             <button class="btn" id="scanBtn"><i class="fas fa-search"></i> 扫描</button>
             <button class="btn" id="connectBtn" disabled>连接</button>
             <button class="btn btn-danger" id="disconnectBtn" disabled>断开</button>
-            <button class="btn" id="simulateBtn"><i class="fas fa-flask"></i> 模拟</button>
+            <button class="btn btn-blue" id="simulateBtn"><i class="fas fa-flask"></i> 模拟</button>
         </div>
     </div>
 
     <!-- 倒计时区域 -->
-    <div class="countdown-box">
+    <div class="countdown-box" id="countdownBox">
         <div class="countdown-value" id="realCountdownDisplay">0</div>
-        <div class="countdown-label">实时倒计时 (秒)</div>
+        <div class="countdown-label" id="countdownLabel">实时倒计时 (秒)</div>
         <div class="set-countdown">
-            <span style="font-size:0.7rem; color:#8899aa;">设定:</span>
-            <span id="setCountdownDisplay" style="font-size:1.2rem; font-weight:700; color:#d4a574;">10</span>
-            <span style="font-size:0.7rem; color:#8899aa;">秒</span>
+            <span style="font-size:0.65rem; color:#8899aa;">⏱ 设定:</span>
+            <span class="set-val" id="setCountdownDisplay">10</span>
+            <span style="font-size:0.65rem; color:#8899aa;">秒</span>
         </div>
-        <div class="row" style="justify-content:center; margin-top:8px;">
-            <button class="btn" id="setIncBtn">B 设置+</button>
-            <button class="btn" id="setDecBtn">C 设置-</button>
+        <div class="row" style="justify-content:center; margin-top:6px;">
+            <button class="btn" id="setIncBtn">B +</button>
+            <button class="btn" id="setDecBtn">C -</button>
             <button class="btn btn-accent" id="startBtn">A 开始</button>
         </div>
     </div>
 
-    <!-- 选手显示 -->
-    <div class="section-label"><i class="fas fa-users"></i> 选手状态</div>
-    <div class="players-grid" id="playersGrid">
-        <!-- 动态生成8个选手卡片 -->
-    </div>
+    <!-- 选手状态 -->
+    <div class="section-label"><i class="fas fa-users"></i> 选手面板</div>
+    <div class="players-grid" id="playersGrid"></div>
 
-    <!-- 违规/成功提示 -->
-    <div class="alert-message" id="foulAlert"></div>
-    <div class="success-message" id="successAlert"></div>
+    <!-- 信息横幅 -->
+    <div class="banner info-banner show" id="infoBanner">⏳ 等待开始… 键值非1-8时显示"未有选手抢答"</div>
+    <div class="banner success-banner" id="successBanner"></div>
+    <div class="banner foul-banner" id="foulBanner"></div>
 
-    <!-- 语音 & 蜂鸣器 -->
-    <div class="action-row">
-        <button class="btn btn-green" id="voiceBtn" style="flex:1;"><i class="fas fa-volume-up"></i> D 语音播报</button>
-        <button class="btn btn-danger" id="buzzerBtn" style="flex:1;"><i class="fas fa-bell"></i> E 蜂鸣器</button>
+    <!-- 控制按钮 -->
+    <div class="row" style="justify-content:center; gap:8px;">
+        <button class="btn btn-green" id="voiceBtn"><i class="fas fa-volume-up"></i> D 语音</button>
+        <button class="btn btn-danger" id="buzzerBtn"><i class="fas fa-bell"></i> E 蜂鸣</button>
+        <button class="btn btn-reset" id="resetBtn"><i class="fas fa-redo"></i> 清除</button>
     </div>
 
     <!-- 日志 -->
-    <div class="log-box" id="sysLog">🎤 抢答器系统就绪</div>
+    <div class="log-box" id="sysLog">🎤 抢答器就绪 | 所有时间数据完全来自上传</div>
 </div>
 
 <script>
 (function() {
-    // DOM
+    // ==================== DOM ====================
     const bleLed = document.getElementById('bleLed');
     const connStatus = document.getElementById('connStatus');
     const configToggleBtn = document.getElementById('configToggleBtn');
@@ -193,28 +210,39 @@
     const sysLog = document.getElementById('sysLog');
     const clockSpan = document.getElementById('liveClock');
     const realCountdownDisplay = document.getElementById('realCountdownDisplay');
+    const countdownLabel = document.getElementById('countdownLabel');
     const setCountdownDisplay = document.getElementById('setCountdownDisplay');
+    const countdownBox = document.getElementById('countdownBox');
     const startBtn = document.getElementById('startBtn');
     const setIncBtn = document.getElementById('setIncBtn');
     const setDecBtn = document.getElementById('setDecBtn');
     const voiceBtn = document.getElementById('voiceBtn');
     const buzzerBtn = document.getElementById('buzzerBtn');
+    const resetBtn = document.getElementById('resetBtn');
     const playersGrid = document.getElementById('playersGrid');
-    const foulAlert = document.getElementById('foulAlert');
-    const successAlert = document.getElementById('successAlert');
+    const infoBanner = document.getElementById('infoBanner');
+    const successBanner = document.getElementById('successBanner');
+    const foulBanner = document.getElementById('foulBanner');
 
+    // ==================== 蓝牙变量 ====================
     let bluetoothDevice = null, gattServer = null, notifyChar = null, writeChar = null, isConnected = false;
-    // 数据
-    let keyValue = 0;
-    let realCountdown = 0;
-    let setCountdown = 10;
-    let prevRealCountdown = 0;
-    let prevKeyValue = 0;
-    let foulPlayer = null;
-    let successPlayer = null;
-    let displayTimer = null;
 
-    // 构建选手卡片
+    // ==================== 核心数据（完全来自上传） ====================
+    let keyValue = 0;               // 当前键值
+    let realCountdown = 0;          // 实时倒计时
+    let setCountdown = 10;          // 设置倒计时
+    let prevKeyValue = 0;           // 上一轮键值
+    let prevRealCountdown = 0;      // 上一轮实时倒计时
+
+    // ==================== 状态机 ====================
+    // 'idle'      : 初始/待机，实时倒计时=0，尚未开始
+    // 'counting'  : 倒计时运行中，实时倒计时>0
+    // 'answering' : 倒计时刚结束，实时倒计时变为0，等待抢答
+    let gameState = 'idle';
+    let foulSet = new Set();        // 本轮违规选手编号集合
+    let successPlayer = null;       // 成功抢答选手编号
+
+    // ==================== UI构建 ====================
     function buildPlayers() {
         playersGrid.innerHTML = '';
         for (let i = 1; i <= 8; i++) {
@@ -226,6 +254,35 @@
         }
     }
 
+    function clearAllPlayerStyles() {
+        for (let i = 1; i <= 8; i++) {
+            const card = document.getElementById('playerCard' + i);
+            if (card) {
+                card.classList.remove('foul', 'success');
+                card.querySelector('.player-status').textContent = '待命';
+            }
+        }
+    }
+
+    function markPlayerFoul(num) {
+        const card = document.getElementById('playerCard' + num);
+        if (card) {
+            card.classList.remove('success');
+            card.classList.add('foul');
+            card.querySelector('.player-status').textContent = '违规!';
+        }
+    }
+
+    function markPlayerSuccess(num) {
+        const card = document.getElementById('playerCard' + num);
+        if (card) {
+            card.classList.remove('foul');
+            card.classList.add('success');
+            card.querySelector('.player-status').textContent = '★成功!';
+        }
+    }
+
+    // ==================== 辅助函数 ====================
     function addSysLog(msg, type='system') {
         const div = document.createElement('div');
         div.className = 'log-entry ' + type;
@@ -233,7 +290,6 @@
         sysLog.appendChild(div); sysLog.scrollTop = sysLog.scrollHeight;
         if(sysLog.children.length > 30) sysLog.removeChild(sysLog.children[0]);
     }
-
     function updateClock() { clockSpan.textContent = new Date().toLocaleTimeString('zh-CN',{hour12:false}); }
     setInterval(updateClock,1000); updateClock();
 
@@ -247,133 +303,150 @@
     }
 
     async function sendCommand(cmd, desc) {
-        if (!isConnected || !writeChar) { addSysLog('⚠️ 未连接', 'tx'); return; }
+        if (!isConnected || !writeChar) { addSysLog('⚠️ 未连接: '+cmd, 'tx'); return; }
         try {
             await writeChar.writeValue(new TextEncoder().encode(cmd));
             addSysLog(`📤 ${cmd} (${desc})`, 'tx');
         } catch(e) { addSysLog(`发送失败: ${e.message}`, 'tx'); }
     }
 
-    // 语音播报 (浏览器端)
     function speak(text) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = 'zh-CN';
-            utter.rate = 1.1;
-            window.speechSynthesis.speak(utter);
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN'; u.rate = 1.05;
+            window.speechSynthesis.speak(u);
         }
     }
-
-    // 蜂鸣器模拟
     function playBeep() {
         try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.frequency.value = 800;
-            gain.gain.value = 0.5;
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.2);
-        } catch(e) {}
+            const ctx = new (window.AudioContext||window.webkitAudioContext)();
+            const o = ctx.createOscillator(); const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.frequency.value=700; g.gain.value=0.4;
+            o.start(); o.stop(ctx.currentTime+0.2);
+        } catch(e){}
     }
 
-    // 清除选手状态
-    function clearAllPlayers() {
-        for (let i = 1; i <= 8; i++) {
-            const card = document.getElementById('playerCard' + i);
-            if (card) {
-                card.classList.remove('foul', 'success');
-                card.querySelector('.player-status').textContent = '待命';
-            }
-        }
-        foulPlayer = null;
-        successPlayer = null;
-        foulAlert.classList.remove('show');
-        successAlert.classList.remove('show');
-    }
-
-    // 更新界面
-    function updateUI() {
+    // ==================== 更新界面显示 ====================
+    function updateDisplay() {
+        // 倒计时数字
         realCountdownDisplay.textContent = realCountdown;
-        if (realCountdown > 0 && realCountdown <= 3) {
+        // 倒计时样式
+        realCountdownDisplay.classList.remove('warning', 'zero');
+        if (gameState === 'counting' && realCountdown <= 3 && realCountdown > 0) {
             realCountdownDisplay.classList.add('warning');
-        } else {
-            realCountdownDisplay.classList.remove('warning');
         }
+        if (gameState === 'answering' && realCountdown === 0) {
+            realCountdownDisplay.classList.add('zero');
+            realCountdownDisplay.textContent = '抢!';
+        }
+        // 倒计时标签
+        if (gameState === 'counting') countdownLabel.textContent = '⏳ 倒计时中…';
+        else if (gameState === 'answering') countdownLabel.textContent = '🔔 开始抢答！';
+        else countdownLabel.textContent = '实时倒计时 (秒)';
+        // 倒计时框
+        countdownBox.classList.toggle('answering', gameState === 'answering');
+        // 设置值
         setCountdownDisplay.textContent = setCountdown;
+        // 信息横幅
+        if (gameState === 'idle') {
+            infoBanner.textContent = '⏳ 等待开始… 键值非1-8时显示"未有选手抢答"';
+            infoBanner.classList.add('show');
+        } else if (gameState === 'counting') {
+            infoBanner.textContent = '⏳ 倒计时中，请勿抢答！';
+            infoBanner.classList.add('show');
+        } else if (gameState === 'answering' && !successPlayer) {
+            infoBanner.textContent = '🔔 开始抢答！请选手按键…';
+            infoBanner.classList.add('show');
+        } else if (successPlayer) {
+            infoBanner.classList.remove('show');
+        }
+        // 成功横幅
+        if (successPlayer) {
+            successBanner.textContent = `🎉 选手 ${successPlayer} 抢答成功！`;
+            successBanner.classList.add('show');
+            infoBanner.classList.remove('show');
+        } else {
+            successBanner.classList.remove('show');
+        }
+        // 违规横幅
+        if (foulSet.size > 0) {
+            const arr = [...foulSet].sort((a,b)=>a-b);
+            foulBanner.textContent = `⚠️ 违规抢答: 选手 ${arr.join('、')} — 罚时10分钟！`;
+            foulBanner.classList.add('show');
+        } else {
+            foulBanner.classList.remove('show');
+        }
+    }
 
-        // 判定逻辑
-        const keyChanged = (keyValue !== prevKeyValue) && (keyValue >= 1 && keyValue <= 8);
-        const countdownEnded = (realCountdown === 0 && prevRealCountdown > 0);
+    // ==================== 核心逻辑 ====================
+    function processIncomingData() {
+        const prevState = gameState;
+        // 判断状态转换
+        if (prevRealCountdown === 0 && realCountdown > 0) {
+            // 倒计时开始：进入counting状态，清除上一轮所有结果
+            gameState = 'counting';
+            foulSet.clear();
+            successPlayer = null;
+            clearAllPlayerStyles();
+            foulBanner.classList.remove('show');
+            successBanner.classList.remove('show');
+            addSysLog('▶ 倒计时开始，进入抢答倒计时阶段', 'system');
+        } else if (prevRealCountdown > 0 && realCountdown === 0) {
+            // 倒计时结束：进入answering状态
+            gameState = 'answering';
+            addSysLog('⏰ 倒计时结束！开始抢答！', 'system');
+            speak('开始抢答');
+        }
 
-        if (keyChanged) {
-            if (realCountdown > 0) {
-                // 违规抢答
-                foulPlayer = keyValue;
-                successPlayer = null;
-                const card = document.getElementById('playerCard' + foulPlayer);
-                if (card) {
-                    clearAllPlayers();
-                    card.classList.add('foul');
-                    card.querySelector('.player-status').textContent = '违规！';
-                }
-                foulAlert.textContent = `⚠️ 选手 ${foulPlayer} 违规抢答！罚时10分钟不能作答！`;
-                foulAlert.classList.add('show');
-                successAlert.classList.remove('show');
-                speak(`选手 ${foulPlayer} 违规抢答！罚时10分钟不能作答！`);
+        // 违规检测：在counting状态中，键值变为1-8
+        if (gameState === 'counting' && keyValue >= 1 && keyValue <= 8 && keyValue !== prevKeyValue) {
+            if (!foulSet.has(keyValue)) {
+                foulSet.add(keyValue);
+                markPlayerFoul(keyValue);
+                addSysLog(`🚫 选手 ${keyValue} 违规抢答！(倒计时未结束)`, 'system');
+                speak(`选手 ${keyValue} 违规抢答！罚时10分钟！`);
                 playBeep();
-            } else if (countdownEnded || realCountdown === 0) {
-                // 成功抢答
-                successPlayer = keyValue;
-                foulPlayer = null;
-                const card = document.getElementById('playerCard' + successPlayer);
-                if (card) {
-                    clearAllPlayers();
-                    card.classList.add('success');
-                    card.querySelector('.player-status').textContent = '成功！';
-                }
-                successAlert.textContent = `🎉 选手 ${successPlayer} 抢答成功！`;
-                successAlert.classList.add('show');
-                foulAlert.classList.remove('show');
-                speak(`选手 ${successPlayer} 抢答成功！`);
-            }
-        } else if (realCountdown === 0 && prevRealCountdown > 0 && keyValue < 1 || keyValue > 8) {
-            // 倒计时结束无人抢答
-            successAlert.textContent = '⏰ 倒计时结束，无人抢答';
-            successAlert.classList.add('show');
-            foulAlert.classList.remove('show');
-            clearAllPlayers();
-        }
-
-        // 如果键值变为非1~8，清除显示
-        if (keyValue < 1 || keyValue > 8) {
-            if (foulPlayer || successPlayer) {
-                // 保持一段时间后清除
-                if (displayTimer) clearTimeout(displayTimer);
-                displayTimer = setTimeout(() => {
-                    clearAllPlayers();
-                }, 3000);
             }
         }
 
+        // 成功检测：在answering状态中，键值从非1-8变为1-8（第一个）
+        if (gameState === 'answering' && !successPlayer && keyValue >= 1 && keyValue <= 8 && keyValue !== prevKeyValue) {
+            // 检查该选手是否在违规列表中（如果在，仍然算成功，但保留违规记录）
+            successPlayer = keyValue;
+            markPlayerSuccess(keyValue);
+            addSysLog(`🏆 选手 ${keyValue} 成功抢答！`, 'system');
+            speak(`选手 ${keyValue} 抢答成功！`);
+            // 成功后再显示违规汇总
+            if (foulSet.size > 0) {
+                const arr = [...foulSet].sort((a,b)=>a-b);
+                addSysLog(`⚠️ 违规选手汇总: ${arr.join('、')}`, 'system');
+            }
+        }
+
+        // 保存状态
         prevKeyValue = keyValue;
         prevRealCountdown = realCountdown;
+        updateDisplay();
     }
 
-    // 解析上传数据 #键值#实时倒计时#设置倒计时#
+    // ==================== 数据解析 ====================
     function parseSensorData(raw) {
         const match = raw.match(/#(\d+)#([\d.]+)#([\d.]+)#/);
         if (!match) return;
+        const newKey = parseInt(match[1]);
+        const newReal = parseFloat(match[2]);
+        const newSet = parseFloat(match[3]);
+        if (isNaN(newKey) || isNaN(newReal) || isNaN(newSet)) return;
+        // 更新全局变量
         prevKeyValue = keyValue;
         prevRealCountdown = realCountdown;
-        keyValue = parseInt(match[1]);
-        realCountdown = parseFloat(match[2]);
-        setCountdown = parseFloat(match[3]);
+        keyValue = newKey;
+        realCountdown = newReal;
+        setCountdown = newSet;
         addSysLog(`📥 键值:${keyValue} 实时:${realCountdown} 设置:${setCountdown}`, 'rx');
-        updateUI();
+        processIncomingData();
     }
 
     function onNotification(event) {
@@ -382,14 +455,31 @@
         parseSensorData(new TextDecoder('utf-8').decode(val).trim());
     }
 
-    // 蓝牙连接
+    // ==================== 清除 ====================
+    function resetAll() {
+        gameState = 'idle';
+        foulSet.clear();
+        successPlayer = null;
+        clearAllPlayerStyles();
+        successBanner.classList.remove('show');
+        foulBanner.classList.remove('show');
+        infoBanner.classList.add('show');
+        infoBanner.textContent = '⏳ 等待开始… 键值非1-8时显示"未有选手抢答"';
+        countdownBox.classList.remove('answering');
+        realCountdownDisplay.classList.remove('warning', 'zero');
+        realCountdownDisplay.textContent = realCountdown;
+        countdownLabel.textContent = '实时倒计时 (秒)';
+        addSysLog('🔄 显示已清除，等待新一轮', 'system');
+    }
+
+    // ==================== 蓝牙 ====================
     async function scan() {
         if (!navigator.bluetooth) { alert('需要Web Bluetooth'); return; }
         const svc = serviceUuidInput.value.trim(); if(!svc) return alert('输入UUID');
         try {
             const d = await navigator.bluetooth.requestDevice({ filters: [{ services: [svc] }], optionalServices: [svc] });
             bluetoothDevice = d; connectBtn.disabled = false;
-            addSysLog(`已选择设备: ${d.name||d.id}`, 'system');
+            addSysLog(`已选择: ${d.name||d.id}`, 'system');
         } catch(e) { if(!e.message.includes('cancelled')) addSysLog(`扫描错误: ${e.message}`); }
     }
     async function connect() {
@@ -414,7 +504,7 @@
     }
     function disconnect() { if (bluetoothDevice?.gatt.connected) bluetoothDevice.gatt.disconnect(); else onDisconnect(); }
 
-    // 按钮事件
+    // ==================== 事件绑定 ====================
     configToggleBtn.addEventListener('click', ()=> configPanel.style.display = configPanel.style.display==='none'?'flex':'none');
     scanBtn.addEventListener('click', scan);
     connectBtn.addEventListener('click', connect);
@@ -422,24 +512,60 @@
     startBtn.addEventListener('click', ()=> sendCommand('A', '开始'));
     setIncBtn.addEventListener('click', ()=> sendCommand('B', '设置+'));
     setDecBtn.addEventListener('click', ()=> sendCommand('C', '设置-'));
-    voiceBtn.addEventListener('click', ()=> { sendCommand('D', '语音播报'); speak('语音播报测试'); });
-    buzzerBtn.addEventListener('click', ()=> { sendCommand('E', '蜂鸣器'); playBeep(); });
+    voiceBtn.addEventListener('click', ()=>{ sendCommand('D', '语音播报'); speak('语音播报功能'); });
+    buzzerBtn.addEventListener('click', ()=>{ sendCommand('E', '蜂鸣器'); playBeep(); });
+    resetBtn.addEventListener('click', resetAll);
 
-    // 模拟数据
+    // ==================== 模拟数据 ====================
+    let simStep = 0;
+    let simTimer = null;
     simulateBtn.addEventListener('click', ()=>{
-        const key = Math.random() < 0.7 ? 0 : Math.floor(Math.random()*8)+1;
-        const real = Math.max(0, (realCountdown - 1));
-        const raw = `#${key}#${real}#${setCountdown}#`;
-        parseSensorData(raw);
-        addSysLog('🧪 模拟数据已注入', 'system');
+        if (simTimer) { clearInterval(simTimer); simTimer = null; simStep = 0; addSysLog('⏹ 模拟已停止', 'system'); return; }
+        simStep = 0;
+        setCountdown = 8;
+        keyValue = 0; realCountdown = 0; prevKeyValue = 0; prevRealCountdown = 0;
+        resetAll();
+        addSysLog('🧪 开始模拟流程 (设置8秒)', 'system');
+        // 初始状态
+        parseSensorData(`#0#0#8#`);
+        simTimer = setInterval(()=>{
+            simStep++;
+            if (simStep === 1) {
+                // 开始倒计时
+                parseSensorData(`#0#8#8#`);
+            } else if (simStep === 3) {
+                // 选手3违规
+                parseSensorData(`#3#6#8#`);
+            } else if (simStep === 4) {
+                // 选手3松开
+                parseSensorData(`#0#5#8#`);
+            } else if (simStep === 6) {
+                // 选手5也违规
+                parseSensorData(`#5#3#8#`);
+            } else if (simStep === 7) {
+                // 选手5松开
+                parseSensorData(`#0#2#8#`);
+            } else if (simStep === 9) {
+                // 倒计时结束
+                parseSensorData(`#0#0#8#`);
+            } else if (simStep === 11) {
+                // 选手2成功抢答
+                parseSensorData(`#2#0#8#`);
+                clearInterval(simTimer); simTimer = null;
+                addSysLog('✅ 模拟完成', 'system');
+            }
+        }, 1000);
     });
 
-    // 初始化
+    // ==================== 初始化 ====================
     function init() {
         buildPlayers();
         updateConnectionUI(false);
-        updateUI();
-        addSysLog('🎤 抢答器系统已启动');
+        realCountdownDisplay.textContent = '0';
+        setCountdownDisplay.textContent = setCountdown;
+        updateDisplay();
+        addSysLog('🎤 抢答器系统就绪');
+        addSysLog('💡 倒计时中按键=违规 | 倒计时结束后第一个按键=成功');
     }
     init();
 })();
